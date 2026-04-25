@@ -19,6 +19,8 @@ Most dashboards show data; this project was evolved to *prescribe action*.
 ### Sprint 1: The MVP (Initial Launch)
 * **Goal:** Centralize cross-brand Cox Automotive metrics (vAuto, Xtime, Manheim) into a single unified index.
 * **Result:** A functioning React dashboard with real-time MCDA-weighted health scores.
+* <img width="1901" height="942" alt="Screenshot 2026-04-25 131748" src="https://github.com/user-attachments/assets/2834a4d7-b2fc-48a7-929d-5817016f8d05" />
+
 
 ### Sprint 2: The "What-If" Strategy Simulator (Current Release)
 * **Problem:** General Managers saw the "D" grade but didn't know which operational lever would improve it fastest.
