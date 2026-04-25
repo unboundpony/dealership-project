@@ -4,8 +4,13 @@ import {
   generateTrendSeries,
   jitterBrands,
 } from "@/services/mockDealerData";
+import {
+  DEFAULT_FLOORPLAN_APR,
+  DEFAULT_LOSS_TOLERANCE_MONTHLY,
+  MOCK_FLEET,
+} from "@/services/mockFloorplan";
 import { scoreDealer } from "@/utils/HealthScoreEngine";
-import type { BrandSignal, HealthReport } from "@/types/health";
+import type { BrandSignal, FloorplanVehicle, HealthReport } from "@/types/health";
 
 interface UseDealerHealthOptions {
   /** Polling interval in ms. 0 disables live sync. */
@@ -22,12 +27,21 @@ interface UseDealerHealthReturn {
   lastUpdated: Date;
   toggleLive: () => void;
   refresh: () => void;
+  /** Floorplan inventory fleet (for the Profit Evaporator engine). */
+  fleet: FloorplanVehicle[];
+  /** Baseline floorplan APR (e.g. 0.075 = 7.5%). */
+  floorplanAPR: number;
+  /** GM-authorized monthly floorplan-interest tolerance, USD. */
+  lossToleranceMonthly: number;
 }
 
 /**
  * Primary data hook for the dashboard. Simulates a live feed of the Big 6
  * Cox brands, runs it through the HealthScoreEngine every poll tick, and
  * exposes the derived report + trend to consumers.
+ *
+ * Also exposes the floorplan fleet and baseline APR that power the
+ * FinanceBurnCard ("Profit Evaporator") downstream.
  */
 export function useDealerHealth(
   opts: UseDealerHealthOptions = {},
@@ -87,5 +101,8 @@ export function useDealerHealth(
     lastUpdated,
     toggleLive: () => setIsLive((v) => !v),
     refresh,
+    fleet: MOCK_FLEET,
+    floorplanAPR: DEFAULT_FLOORPLAN_APR,
+    lossToleranceMonthly: DEFAULT_LOSS_TOLERANCE_MONTHLY,
   };
 }

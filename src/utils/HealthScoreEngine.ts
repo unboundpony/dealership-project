@@ -2,6 +2,9 @@ import type {
   BrandScore,
   BrandSignal,
   Bottleneck,
+  FloorplanBurn,
+  FloorplanVehicle,
+  FloorplanVehicleBurn,
   HealthReport,
   MetricSpec,
   Pillar,
@@ -527,5 +530,131 @@ export function scoreDealer(
     brands: brandScores,
     bottlenecks,
     entropyWeights,
+  };
+}
+
+/* ==========================================================================
+ * FIN-305 · Floorplan "Profit Evaporator" engine
+ * ==========================================================================
+ *
+ * Floorplan interest is the single biggest variable cost a dealer carries on
+ * un-sold inventory. Every hour a unit sits on the lot, the basis is being
+ * "burned" at a daily rate of:
+ *
+ *     dailyInterest_i  =  basis_i  ·  APR / 365
+ *
+ *     H_d  =  Σ_i  dailyInterest_i       (fleet-wide daily burn)
+ *
+ *     H_30 =  30 · H_d                   (monthly projection)
+ *
+ *     accruedInterest_i  =  dailyInterest_i · daysOnLot_i
+ *
+ * TOXIC-ASSET TRIGGER
+ *   A unit is flagged "toxic" when EITHER of the following is true:
+ *
+ *     1)  accruedInterest_i  >  0.15 · projectedGross_i
+ *         — i.e. floorplan interest has eaten >15% of the expected gross.
+ *     2)  daysOnLot_i  >  60
+ *         — the industry "aged-unit" threshold in 2026 used retail.
+ *
+ * LOSS-TOLERANCE ZONES
+ *   burnRatio = monthlyBurn / lossTolerance
+ *     < 0.50           → "safe"    (cyan)
+ *     0.50 – 0.75      → "watch"   (gold)
+ *     0.75 – 1.00      → "warning" (amber)
+ *     > 1.00           → "breach"  (fire-red, flicker)
+ * ======================================================================= */
+
+export interface CalculateInventoryBurnOptions {
+  /** GM-authorized monthly floorplan-interest tolerance, USD. */
+  lossToleranceMonthly?: number;
+  /** How many "Top Money Losers" to surface to the UI. Default 3. */
+  topN?: number;
+  /** Override the days-per-year basis for the interest calc. Default 365. */
+  daysPerYear?: number;
+}
+
+const TOXIC_EROSION_THRESHOLD = 0.15;
+const TOXIC_DAYS_ON_LOT = 60;
+
+function zoneFromRatio(ratio: number): FloorplanBurn["zone"] {
+  if (ratio > 1) return "breach";
+  if (ratio > 0.75) return "warning";
+  if (ratio > 0.5) return "watch";
+  return "safe";
+}
+
+/**
+ * Fleet-wide "Profit Evaporator" calculator. Returns per-vehicle burn, an
+ * aggregate H_d / H_30, the burn-ratio zone and the ranked toxic-asset list
+ * that powers the FinanceBurnCard UI.
+ */
+export function calculateInventoryBurn(
+  fleet: FloorplanVehicle[],
+  apr: number,
+  opts: CalculateInventoryBurnOptions = {},
+): FloorplanBurn {
+  const {
+    lossToleranceMonthly = 18_000,
+    topN = 3,
+    daysPerYear = 365,
+  } = opts;
+
+  const safeApr = Math.max(0, apr);
+
+  const units: FloorplanVehicleBurn[] = fleet.map((v) => {
+    const dailyInterest = (v.basis * safeApr) / daysPerYear;
+    const accruedInterest = dailyInterest * v.daysOnLot;
+    const grossErosion =
+      v.projectedGross > 0 ? accruedInterest / v.projectedGross : Infinity;
+
+    const toxicReasons: string[] = [];
+    if (grossErosion > TOXIC_EROSION_THRESHOLD) {
+      toxicReasons.push(
+        `Interest has eroded ${Math.round(grossErosion * 100)}% of projected gross`,
+      );
+    }
+    if (v.daysOnLot > TOXIC_DAYS_ON_LOT) {
+      toxicReasons.push(`${v.daysOnLot}d on lot (>60d aged)`);
+    }
+    const toxic = toxicReasons.length > 0;
+
+    return {
+      ...v,
+      dailyInterest,
+      accruedInterest,
+      grossErosion,
+      toxic,
+      toxicReasons,
+    };
+  });
+
+  const dailyBurn = units.reduce((s, u) => s + u.dailyInterest, 0);
+  const monthlyBurn = dailyBurn * 30;
+  const accruedBurn = units.reduce((s, u) => s + u.accruedInterest, 0);
+  const totalBasis = units.reduce((s, u) => s + u.basis, 0);
+  const burnRatio = lossToleranceMonthly > 0 ? monthlyBurn / lossToleranceMonthly : 0;
+
+  const toxic = units
+    .filter((u) => u.toxic)
+    .sort((a, b) => b.accruedInterest - a.accruedInterest);
+
+  const topMoneyLosers = [...units]
+    .sort((a, b) => b.accruedInterest - a.accruedInterest)
+    .slice(0, topN);
+
+  return {
+    apr: safeApr,
+    totalUnits: units.length,
+    totalBasis,
+    dailyBurn,
+    monthlyBurn,
+    accruedBurn,
+    lossTolerance: lossToleranceMonthly,
+    burnRatio,
+    zone: zoneFromRatio(burnRatio),
+    units,
+    toxic,
+    topMoneyLosers,
   };
 }

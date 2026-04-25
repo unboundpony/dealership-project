@@ -99,3 +99,68 @@ export interface HealthReport {
   /** Shannon-entropy-derived pillar weights (IE weighting) */
   entropyWeights: Record<Pillar, number>;
 }
+
+/* ---------------------------------------------------------------------------
+ * Floorplan · Inventory Carrying-Cost ("Profit Evaporator") types
+ * ------------------------------------------------------------------------- */
+
+/**
+ * A single vehicle on the floorplan. Basis = acquisition cost that the dealer
+ * is actively paying interest on; projectedGross = expected retail gross.
+ */
+export interface FloorplanVehicle {
+  vin: string;
+  year: number;
+  make: string;
+  model: string;
+  /** Rooftop / store identifier */
+  rooftop: string;
+  /** Acquisition cost (basis) on which floorplan interest accrues */
+  basis: number;
+  /** Expected retail gross profit on the unit */
+  projectedGross: number;
+  /** Days the unit has been on the lot / on floorplan */
+  daysOnLot: number;
+}
+
+/**
+ * A vehicle with its accrued interest drag and toxic-asset flags resolved.
+ */
+export interface FloorplanVehicleBurn extends FloorplanVehicle {
+  /** Dollars burned per day at the active APR: basis · (APR / 365) */
+  dailyInterest: number;
+  /** Total accrued interest to date: dailyInterest · daysOnLot */
+  accruedInterest: number;
+  /** Accrued interest as a share of the projected gross (0-1+) */
+  grossErosion: number;
+  /** Toxic-asset flag: either erosion > 15% OR daysOnLot > 60 */
+  toxic: boolean;
+  toxicReasons: string[];
+}
+
+/**
+ * Global "Profit Evaporator" readout for an entire fleet at a given APR.
+ * All dollar figures are in USD.
+ */
+export interface FloorplanBurn {
+  apr: number;
+  totalUnits: number;
+  totalBasis: number;
+  /** H_d = Σ (basis · APR / 365) — daily interest across the whole fleet. */
+  dailyBurn: number;
+  /** 30-day projection of dailyBurn. */
+  monthlyBurn: number;
+  /** Sum of accruedInterest across units (cumulative to date). */
+  accruedBurn: number;
+  /** GM-authorized monthly floorplan tolerance. */
+  lossTolerance: number;
+  /** monthlyBurn / lossTolerance — 1.0 = at limit, >1 = breach. */
+  burnRatio: number;
+  /** Zone rating for the thermometer. */
+  zone: "safe" | "watch" | "warning" | "breach";
+  units: FloorplanVehicleBurn[];
+  /** All units flagged toxic (erosion >15% of gross OR >60 DOL). */
+  toxic: FloorplanVehicleBurn[];
+  /** Top N money-losers (by accruedInterest, descending). */
+  topMoneyLosers: FloorplanVehicleBurn[];
+}
