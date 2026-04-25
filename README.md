@@ -22,11 +22,17 @@ Most dashboards show data; this project was evolved to *prescribe action*.
 * <img width="1901" height="942" alt="Screenshot 2026-04-25 131748" src="https://github.com/user-attachments/assets/2834a4d7-b2fc-48a7-929d-5817016f8d05" />
 
 
-### Sprint 2: The "What-If" Strategy Simulator (Current Release)
+### Sprint 2: The "What-If" Strategy Simulator (Strategy Release)
 * **Problem:** General Managers saw the "D" grade but didn't know which operational lever would improve it fastest.
 * **Solution:** Developed a professional-grade Decision Support System (DSS) using Sensitivity Analysis.
 
 * <img width="1901" height="944" alt="Screenshot 2026-04-25 131637" src="https://github.com/user-attachments/assets/b44896af-3743-42b9-b974-e29500e5effd" />
+
+### Sprint 3: The "Profit Evaporator" & Financial Persistence (Financial Release)
+* **Problem:** Dealerships often focus on "Front-End Gross" while ignoring the "Silent Killer" of profitability: floorplan interest drag.
+* **Solution:** Developed a real-time **Inventory Carrying-Cost Burn Engine** and a decoupled **Persistent Simulation HUD**.
+* <img width="1900" height="767" alt="Screenshot 2026-04-25 142031" src="https://github.com/user-attachments/assets/7749b5c6-7bf1-47a0-8a44-0cdc7f089fdf" />
+
 
 
 ---
