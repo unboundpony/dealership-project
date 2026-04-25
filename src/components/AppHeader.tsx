@@ -2,6 +2,7 @@ import {
   Activity,
   Bell,
   CircleDot,
+  FlaskConical,
   Pause,
   Play,
   RefreshCw,
@@ -15,6 +16,8 @@ interface AppHeaderProps {
   onToggleLive: () => void;
   onRefresh: () => void;
   lastUpdated: Date;
+  isSimulating?: boolean;
+  onToggleSimulator?: () => void;
 }
 
 export function AppHeader({
@@ -22,6 +25,8 @@ export function AppHeader({
   onToggleLive,
   onRefresh,
   lastUpdated,
+  isSimulating = false,
+  onToggleSimulator,
 }: AppHeaderProps) {
   return (
     <header className="sticky top-0 z-30 border-b border-white/5 bg-navy-950/80 backdrop-blur-lg">
@@ -99,6 +104,37 @@ export function AppHeader({
             <RefreshCw className="h-3.5 w-3.5 text-accent-cyan" />
             <span className="hidden sm:inline">Refresh</span>
           </button>
+
+          {onToggleSimulator && (
+            <button
+              type="button"
+              onClick={onToggleSimulator}
+              aria-pressed={isSimulating}
+              title="What-If Strategy Simulator"
+              className={cn(
+                "focus-ring relative inline-flex h-9 items-center gap-2 rounded-lg border px-3 text-[12px] font-semibold transition",
+                isSimulating
+                  ? "border-accent-gold/50 bg-accent-gold/15 text-accent-gold shadow-[0_0_18px_rgba(245,183,0,0.25)] hover:bg-accent-gold/20"
+                  : "border-white/10 bg-navy-900/80 text-ink-100 hover:bg-navy-800",
+              )}
+            >
+              <FlaskConical
+                className={cn(
+                  "h-3.5 w-3.5",
+                  isSimulating ? "text-accent-gold" : "text-accent-gold/80",
+                )}
+              />
+              <span className="hidden sm:inline">
+                {isSimulating ? "Lab · ON" : "Lab Mode"}
+              </span>
+              {isSimulating && (
+                <span
+                  className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-accent-gold animate-sync-blink"
+                  aria-hidden
+                />
+              )}
+            </button>
+          )}
 
           <button
             type="button"

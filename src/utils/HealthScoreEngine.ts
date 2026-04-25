@@ -325,14 +325,165 @@ function computeBottlenecks(
     .sort((a, b) => b.drag - a.drag);
 }
 
-/* --------------------------------------------------------------------------
- * Public entry point
- * ------------------------------------------------------------------------ */
-
 export interface ScoringOptions {
   /** Previous overall score, for trend delta. Defaults to 0. */
   previousOverall?: number;
 }
+
+/* --------------------------------------------------------------------------
+ * Simulation / "What-If" projection types
+ * ------------------------------------------------------------------------ */
+
+/**
+ * Partial override of pillar scores on a 0-100 scale. Any pillar not present
+ * in the record falls back to its "Actual" (live) value.
+ */
+export type PillarOverrides = Partial<Record<Pillar, number>>;
+
+/**
+ * Sensitivity analysis output for a single pillar. `weightedDelta` is the
+ * pillar's individual contribution to the projected score change and is
+ * directly comparable across pillars.
+ */
+export interface PillarDelta {
+  pillar: Pillar;
+  label: string;
+  baseline: number;
+  projected: number;
+  /** Δc_i — raw pillar-score change on a 0-100 scale */
+  delta: number;
+  /** w_i — entropy-blended pillar weight (0-1) */
+  weight: number;
+  /** w_i · Δc_i — contribution to ΔS (total score) */
+  weightedDelta: number;
+}
+
+/**
+ * Forward-looking optimization ranking. `roi` is the maximum total-score gain
+ * an operator could unlock by driving that pillar from its live value up to
+ * the 100 ceiling, i.e. w_i · (100 − c_i). Bigger ROI = bigger lever.
+ */
+export interface PillarImpact {
+  pillar: Pillar;
+  label: string;
+  current: number;
+  headroom: number;
+  weight: number;
+  /** w_i · (100 − c_i) — max achievable total-score delta */
+  roi: number;
+}
+
+const PILLAR_ORDER: Pillar[] = [
+  "inventory",
+  "demand",
+  "valuation",
+  "service",
+  "finance",
+];
+
+/**
+ * Produce a projected HealthReport from an already-scored baseline and a set
+ * of pillar-score overrides. Re-uses the entropy-blended pillar weights from
+ * the live run so that the projection remains directly comparable to the
+ * "Actual" number driving the dashboard.
+ *
+ *   S_projected = 100 · Σ w_p · (c_p' / 100)
+ *   ΔS         = Σ (w_p · Δc_p)
+ */
+export function simulateReport(
+  baseline: HealthReport,
+  overrides: PillarOverrides,
+): HealthReport {
+  const clamp = (x: number) => Math.max(0, Math.min(100, x));
+
+  const projectedPillars: PillarScore[] = baseline.pillars.map((p) => {
+    const override = overrides[p.pillar];
+    const next = typeof override === "number" ? clamp(override) : p.score;
+    return { ...p, score: Math.round(next * 10) / 10 };
+  });
+
+  const overallRaw = projectedPillars.reduce(
+    (s, p) => s + (p.score / 100) * p.weight,
+    0,
+  );
+  const overall = Math.round(overallRaw * 1000) / 10;
+  const trend = Math.round((overall - baseline.overall) * 10) / 10;
+
+  return {
+    ...baseline,
+    overall,
+    grade: gradeOf(overall),
+    trend,
+    pillars: projectedPillars,
+  };
+}
+
+/**
+ * Per-pillar sensitivity contribution list. Sum of `weightedDelta` equals
+ * the projected ΔS (in 0-100 points) against the baseline.
+ */
+export function pillarSensitivity(
+  baseline: HealthReport,
+  overrides: PillarOverrides,
+): PillarDelta[] {
+  return baseline.pillars.map((p) => {
+    const projected =
+      typeof overrides[p.pillar] === "number"
+        ? Math.max(0, Math.min(100, overrides[p.pillar] as number))
+        : p.score;
+    const delta = projected - p.score;
+    return {
+      pillar: p.pillar,
+      label: p.label,
+      baseline: Math.round(p.score * 10) / 10,
+      projected: Math.round(projected * 10) / 10,
+      delta: Math.round(delta * 10) / 10,
+      weight: p.weight,
+      weightedDelta: Math.round(p.weight * delta * 10) / 10,
+    };
+  });
+}
+
+/**
+ * Sensitivity delta ΔS = Σ (w_i · Δc_i), rounded to 1 decimal.
+ */
+export function sensitivityDelta(
+  baseline: HealthReport,
+  overrides: PillarOverrides,
+): number {
+  const total = pillarSensitivity(baseline, overrides).reduce(
+    (s, d) => s + d.weightedDelta,
+    0,
+  );
+  return Math.round(total * 10) / 10;
+}
+
+/**
+ * Rank pillars by ROI — how many total-score points an operator could unlock
+ * by driving that pillar from its current value to the 100 ceiling. This is
+ * the core of the "Impact Ranking" in the Simulation Panel.
+ */
+export function impactRanking(baseline: HealthReport): PillarImpact[] {
+  return baseline.pillars
+    .map<PillarImpact>((p) => {
+      const headroom = Math.max(0, 100 - p.score);
+      return {
+        pillar: p.pillar,
+        label: p.label,
+        current: Math.round(p.score * 10) / 10,
+        headroom: Math.round(headroom * 10) / 10,
+        weight: p.weight,
+        roi: Math.round(p.weight * headroom * 10) / 10,
+      };
+    })
+    .sort((a, b) => b.roi - a.roi);
+}
+
+export { PILLAR_LABELS, PILLAR_ORDER };
+
+/* --------------------------------------------------------------------------
+ * Public entry point — "Actual" (live) scoring
+ * ------------------------------------------------------------------------ */
 
 export function scoreDealer(
   brands: BrandSignal[],

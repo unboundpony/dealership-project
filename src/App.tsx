@@ -1,4 +1,5 @@
 import { useDealerHealth } from "@/hooks/useDealerHealth";
+import { useHealthSimulation } from "@/hooks/useHealthSimulation";
 import { AppHeader } from "@/components/AppHeader";
 import { HeroScore } from "@/components/HeroScore";
 import { KpiStrip } from "@/components/KpiStrip";
@@ -7,10 +8,13 @@ import { OperationalBottlenecks } from "@/components/OperationalBottlenecks";
 import { PillarRadar } from "@/components/PillarRadar";
 import { BrandRankBar } from "@/components/BrandRankBar";
 import { MethodologyPanel } from "@/components/MethodologyPanel";
+import { SimulationPanel } from "@/components/SimulationPanel";
 
 export default function App() {
   const { brands, report, trend, isLive, lastUpdated, toggleLive, refresh } =
     useDealerHealth({ pollMs: 6000, trendDays: 30 });
+
+  const simulation = useHealthSimulation(report);
 
   return (
     <div className="min-h-screen">
@@ -19,6 +23,8 @@ export default function App() {
         onToggleLive={toggleLive}
         onRefresh={refresh}
         lastUpdated={lastUpdated}
+        isSimulating={simulation.isActive}
+        onToggleSimulator={simulation.toggle}
       />
 
       <main className="mx-auto max-w-[1600px] space-y-6 px-4 py-6 sm:px-6 sm:py-8">
@@ -44,7 +50,16 @@ export default function App() {
 
         <KpiStrip brands={brands} report={report} />
 
-        <HeroScore report={report} trend={trend} />
+        <HeroScore
+          report={report}
+          trend={trend}
+          simulation={{
+            isActive: simulation.isActive,
+            projected: simulation.projected,
+            overrides: simulation.overrides,
+            totalDelta: simulation.totalDelta,
+          }}
+        />
 
         <section className="grid gap-6 xl:grid-cols-2">
           <PillarRadar report={report} />
@@ -59,13 +74,29 @@ export default function App() {
 
         <footer className="flex flex-wrap items-center justify-between gap-3 pt-2 font-mono text-[10px] uppercase tracking-widest text-ink-400">
           <span>
-            Cox Automotive · Omni-Channel Dealer Health Index · v1.0
+            Cox Automotive · Omni-Channel Dealer Health Index · v1.1
           </span>
           <span>
-            Engine: HealthScoreEngine.ts · MCDA + Shannon Entropy Weighting
+            Engine: HealthScoreEngine.ts · MCDA + Shannon Entropy · What-If
+            Simulator
           </span>
         </footer>
       </main>
+
+      <SimulationPanel
+        open={simulation.isActive}
+        onClose={simulation.deactivate}
+        baseline={simulation.baseline}
+        projected={simulation.projected}
+        overrides={simulation.overrides}
+        sensitivity={simulation.sensitivity}
+        impact={simulation.impact}
+        totalDelta={simulation.totalDelta}
+        isDirty={simulation.isDirty}
+        onChange={simulation.setPillar}
+        onReset={simulation.reset}
+        onMaxOut={simulation.maxOut}
+      />
     </div>
   );
 }

@@ -96,11 +96,32 @@ export default {
           "0%": { transform: "translateY(6px)", opacity: "0" },
           "100%": { transform: "translateY(0)", opacity: "1" },
         },
+        "pulse-amber": {
+          "0%,100%": {
+            boxShadow:
+              "0 0 0 1px rgba(245,183,0,0.35), 0 0 24px rgba(245,183,0,0.28)",
+          },
+          "50%": {
+            boxShadow:
+              "0 0 0 2px rgba(245,183,0,0.75), 0 0 40px rgba(245,183,0,0.55)",
+          },
+        },
+        "panel-in": {
+          "0%": { transform: "translateX(32px)", opacity: "0" },
+          "100%": { transform: "translateX(0)", opacity: "1" },
+        },
+        "fade-in": {
+          "0%": { opacity: "0" },
+          "100%": { opacity: "1" },
+        },
       },
       animation: {
         "pulse-ring": "pulse-ring 2.4s ease-in-out infinite",
         "sync-blink": "sync-blink 1.6s ease-in-out infinite",
         "score-rise": "score-rise 600ms ease-out both",
+        "pulse-amber": "pulse-amber 2.4s ease-in-out infinite",
+        "panel-in": "panel-in 260ms cubic-bezier(0.22, 1, 0.36, 1) both",
+        "fade-in": "fade-in 180ms ease-out both",
       },
     },
   },

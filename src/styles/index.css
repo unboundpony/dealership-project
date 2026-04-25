@@ -100,6 +100,115 @@ body {
   }
 }
 
+/* -------------------------------------------------------------------------
+ * Lab Mode ("What-If" simulator) — custom range slider
+ *   A high-end Cox PRISM styled range input. Track is a navy groove with a
+ *   colored fill driven by `--lab-fill` (set inline per slider). Thumb is an
+ *   amber-glow capsule to signal "projected" state.
+ * ----------------------------------------------------------------------- */
+.lab-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 26px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.lab-slider:focus-visible {
+  outline: none;
+}
+
+.lab-slider::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    var(--lab-accent, #22d3ee) 0%,
+    var(--lab-accent, #22d3ee) var(--lab-fill, 50%),
+    rgba(122, 148, 212, 0.18) var(--lab-fill, 50%),
+    rgba(122, 148, 212, 0.18) 100%
+  );
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+
+.lab-slider::-moz-range-track {
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(122, 148, 212, 0.18);
+}
+
+.lab-slider::-moz-range-progress {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--lab-accent, #22d3ee);
+}
+
+.lab-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  margin-top: -7px;
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  background: #f5b700;
+  border: 2px solid #0a1128;
+  box-shadow:
+    0 0 0 1px rgba(245, 183, 0, 0.55),
+    0 0 14px rgba(245, 183, 0, 0.55),
+    0 4px 10px rgba(6, 11, 26, 0.65);
+  transition:
+    transform 120ms ease,
+    box-shadow 120ms ease;
+}
+
+.lab-slider:hover::-webkit-slider-thumb,
+.lab-slider:focus-visible::-webkit-slider-thumb {
+  transform: scale(1.08);
+  box-shadow:
+    0 0 0 1px rgba(245, 183, 0, 0.85),
+    0 0 22px rgba(245, 183, 0, 0.75),
+    0 4px 14px rgba(6, 11, 26, 0.75);
+}
+
+.lab-slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  background: #f5b700;
+  border: 2px solid #0a1128;
+  box-shadow:
+    0 0 0 1px rgba(245, 183, 0, 0.55),
+    0 0 14px rgba(245, 183, 0, 0.55),
+    0 4px 10px rgba(6, 11, 26, 0.65);
+  cursor: pointer;
+}
+
+/* Soft amber glow used on the "Projected" hero gauge when Lab Mode is live. */
+.lab-pulse-ring {
+  position: absolute;
+  inset: -8px;
+  border-radius: 9999px;
+  border: 1px solid rgba(245, 183, 0, 0.45);
+  box-shadow:
+    0 0 0 1px rgba(245, 183, 0, 0.25) inset,
+    0 0 36px rgba(245, 183, 0, 0.28);
+  animation: lab-pulse 2.2s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes lab-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.015);
+  }
+}
+
 /* Recharts tooltip polish */
 .recharts-default-tooltip {
   background: rgba(14, 24, 54, 0.95) !important;
