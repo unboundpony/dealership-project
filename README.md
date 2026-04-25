@@ -12,6 +12,23 @@ dragging that number down.
 
 ---
 
+## 🚀 Product Evolution & Iteration
+
+Most dashboards show data; this project was evolved to *prescribe action*. 
+
+### Sprint 1: The MVP (Initial Launch)
+* **Goal:** Centralize cross-brand Cox Automotive metrics (vAuto, Xtime, Manheim) into a single unified index.
+* **Result:** A functioning React dashboard with real-time MCDA-weighted health scores.
+
+### Sprint 2: The "What-If" Strategy Simulator (Current Release)
+* **Problem:** General Managers saw the "D" grade but didn't know which operational lever would improve it fastest.
+* **Solution:** Developed a professional-grade Decision Support System (DSS) using Sensitivity Analysis.
+
+* <img width="1901" height="944" alt="Screenshot 2026-04-25 131637" src="https://github.com/user-attachments/assets/b44896af-3743-42b9-b974-e29500e5effd" />
+
+
+---
+
 ## 1 · The Big 6 Signal Architecture
 
 | Pillar        | Source System           | Key Signals                                      |
