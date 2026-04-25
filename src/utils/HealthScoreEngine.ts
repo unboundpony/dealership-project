@@ -1,0 +1,380 @@
+import type {
+  BrandScore,
+  BrandSignal,
+  Bottleneck,
+  HealthReport,
+  MetricSpec,
+  Pillar,
+  PillarScore,
+} from "@/types/health";
+
+/**
+ * ============================================================================
+ * HealthScoreEngine — IE-weighted Multi-Criteria Decision Analysis (MCDA)
+ * ============================================================================
+ *
+ * The Dealer Health Score is a single 0-100 number that consolidates dealer
+ * performance across the Cox Automotive "Big 6" data sources.
+ *
+ * Methodology (three-stage MCDA pipeline):
+ *
+ *   1) NORMALIZATION
+ *      Raw telemetry lives on wildly different scales (days, %, counts,
+ *      indices, $). Each metric is mapped to [0, 1] using its `target`
+ *      (healthy) and `floor` (worst-tolerated) thresholds, respecting its
+ *      `direction` (higher-better vs lower-better).
+ *
+ *   2) IE WEIGHTING  (Information Entropy / Shannon)
+ *      For the inter-pillar roll-up, weights are derived from the Shannon
+ *      entropy of each pillar's normalized distribution across brands.
+ *      Pillars with HIGHER dispersion (= more decision-relevant information)
+ *      receive a HIGHER weight. This is the classic Entropy-Weight MCDA
+ *      technique (CRITIC/EWM family). A fixed prior blends with the entropy
+ *      weights so the dashboard stays executive-readable even when one
+ *      pillar momentarily goes flat.
+ *
+ *      Intra-pillar metric weights are analyst-set importance priors
+ *      (the IE "I" = Importance × Entropy combination) baked into the data
+ *      service (e.g. Recon Cycle Time is 0.60 of the Service pillar).
+ *
+ *   3) AGGREGATION
+ *      Pillar score  = Σ (w_metric × n_metric)   across brands in pillar
+ *      Overall score = Σ (w_pillar × pillar_score)   × 100
+ *
+ * BOTTLENECK DETECTION
+ *      The engine also emits a ranked list of "drag" metrics — each weighted
+ *      by how many raw score points it is personally subtracting from the
+ *      100 ceiling. This is what powers the "Operational Bottlenecks"
+ *      (IE Insight) section of the dashboard.
+ * ============================================================================
+ */
+
+const PILLAR_LABELS: Record<Pillar, string> = {
+  inventory: "Inventory",
+  demand: "Demand",
+  valuation: "Valuation",
+  service: "Service",
+  finance: "Finance",
+};
+
+/**
+ * Analyst-set importance prior for each pillar. The runtime Shannon-entropy
+ * weights are blended with this prior (70/30) to stabilize the dashboard.
+ *
+ * These priors reflect Cox's own "omnichannel retail" point of view:
+ * inventory + demand are the biggest P&L levers, service is the recon
+ * bottleneck that caps the other four, and finance closes the deal.
+ */
+const PRIOR_PILLAR_WEIGHTS: Record<Pillar, number> = {
+  inventory: 0.26,
+  demand: 0.24,
+  valuation: 0.18,
+  service: 0.18,
+  finance: 0.14,
+};
+
+const ENTROPY_PRIOR_BLEND = 0.7; // weight on analyst prior, 1 - blend goes to entropy
+
+/* --------------------------------------------------------------------------
+ * Stage 1 — Normalization
+ * ------------------------------------------------------------------------ */
+
+/**
+ * Map a raw metric value to [0, 1] using its target / floor thresholds,
+ * respecting direction. Clamped on both ends.
+ */
+export function normalizeMetric(m: MetricSpec): number {
+  const { value, target, floor, direction } = m;
+  if (direction === "higher-better") {
+    if (value >= target) return 1;
+    if (value <= floor) return 0;
+    return (value - floor) / (target - floor);
+  }
+  // lower-better
+  if (value <= target) return 1;
+  if (value >= floor) return 0;
+  return (floor - value) / (floor - target);
+}
+
+/* --------------------------------------------------------------------------
+ * Stage 2 — Shannon entropy over pillar distributions
+ * ------------------------------------------------------------------------ */
+
+function shannonEntropy(values: number[]): number {
+  const total = values.reduce((s, v) => s + v, 0);
+  if (total <= 0) return 0;
+  let h = 0;
+  for (const v of values) {
+    if (v <= 0) continue;
+    const p = v / total;
+    h -= p * Math.log(p);
+  }
+  return h;
+}
+
+/**
+ * Derive entropy-based pillar weights from the current normalized signal.
+ * Pillars whose constituent metrics disagree (high entropy) are weighted up;
+ * pillars that are "all one value" (low entropy) are weighted down because
+ * they contribute less decision information.
+ */
+export function computeEntropyWeights(
+  brands: BrandSignal[],
+): Record<Pillar, number> {
+  const byPillar: Record<Pillar, number[]> = {
+    inventory: [],
+    demand: [],
+    valuation: [],
+    service: [],
+    finance: [],
+  };
+
+  for (const b of brands) {
+    for (const m of b.metrics) {
+      byPillar[b.pillar].push(normalizeMetric(m));
+    }
+  }
+
+  const rawEntropy: Record<Pillar, number> = {
+    inventory: shannonEntropy(byPillar.inventory),
+    demand: shannonEntropy(byPillar.demand),
+    valuation: shannonEntropy(byPillar.valuation),
+    service: shannonEntropy(byPillar.service),
+    finance: shannonEntropy(byPillar.finance),
+  };
+
+  const sum =
+    rawEntropy.inventory +
+    rawEntropy.demand +
+    rawEntropy.valuation +
+    rawEntropy.service +
+    rawEntropy.finance;
+
+  const entropyNorm: Record<Pillar, number> =
+    sum > 0
+      ? {
+          inventory: rawEntropy.inventory / sum,
+          demand: rawEntropy.demand / sum,
+          valuation: rawEntropy.valuation / sum,
+          service: rawEntropy.service / sum,
+          finance: rawEntropy.finance / sum,
+        }
+      : { ...PRIOR_PILLAR_WEIGHTS };
+
+  // Blend analyst prior with entropy weights for stability
+  const blended: Record<Pillar, number> = {
+    inventory:
+      ENTROPY_PRIOR_BLEND * PRIOR_PILLAR_WEIGHTS.inventory +
+      (1 - ENTROPY_PRIOR_BLEND) * entropyNorm.inventory,
+    demand:
+      ENTROPY_PRIOR_BLEND * PRIOR_PILLAR_WEIGHTS.demand +
+      (1 - ENTROPY_PRIOR_BLEND) * entropyNorm.demand,
+    valuation:
+      ENTROPY_PRIOR_BLEND * PRIOR_PILLAR_WEIGHTS.valuation +
+      (1 - ENTROPY_PRIOR_BLEND) * entropyNorm.valuation,
+    service:
+      ENTROPY_PRIOR_BLEND * PRIOR_PILLAR_WEIGHTS.service +
+      (1 - ENTROPY_PRIOR_BLEND) * entropyNorm.service,
+    finance:
+      ENTROPY_PRIOR_BLEND * PRIOR_PILLAR_WEIGHTS.finance +
+      (1 - ENTROPY_PRIOR_BLEND) * entropyNorm.finance,
+  };
+
+  const totalBlended =
+    blended.inventory +
+    blended.demand +
+    blended.valuation +
+    blended.service +
+    blended.finance;
+
+  return {
+    inventory: blended.inventory / totalBlended,
+    demand: blended.demand / totalBlended,
+    valuation: blended.valuation / totalBlended,
+    service: blended.service / totalBlended,
+    finance: blended.finance / totalBlended,
+  };
+}
+
+/* --------------------------------------------------------------------------
+ * Stage 3 — Aggregation + scoring
+ * ------------------------------------------------------------------------ */
+
+function computeBrandScore(brand: BrandSignal): BrandScore {
+  // Normalize per metric and roll up with intra-pillar weights
+  const metrics = brand.metrics.map((m) => {
+    const n = normalizeMetric(m);
+    return {
+      key: m.key,
+      label: m.label,
+      normalized: n,
+      weight: m.weight,
+      contribution: n * m.weight,
+      raw: m.value,
+      unit: m.unit,
+      direction: m.direction,
+    };
+  });
+
+  const weightSum = metrics.reduce((s, m) => s + m.weight, 0) || 1;
+  const pillarScore =
+    metrics.reduce((s, m) => s + m.contribution, 0) / weightSum;
+
+  return {
+    brand: brand.id,
+    pillarScore,
+    score: Math.round(pillarScore * 1000) / 10, // 0-100, one decimal
+    metrics,
+  };
+}
+
+function pillarAggregate(
+  pillar: Pillar,
+  brandScores: BrandScore[],
+  brands: BrandSignal[],
+): number {
+  const ids = brands.filter((b) => b.pillar === pillar).map((b) => b.id);
+  const relevant = brandScores.filter((b) => ids.includes(b.brand));
+  if (relevant.length === 0) return 0;
+  const avg =
+    relevant.reduce((s, b) => s + b.pillarScore, 0) / relevant.length;
+  return avg; // 0-1
+}
+
+function gradeOf(score: number): HealthReport["grade"] {
+  if (score >= 90) return "A";
+  if (score >= 80) return "B";
+  if (score >= 70) return "C";
+  if (score >= 60) return "D";
+  return "F";
+}
+
+/* --------------------------------------------------------------------------
+ * Bottleneck detection
+ * ------------------------------------------------------------------------ */
+
+function recommendationFor(m: MetricSpec, pillar: Pillar): string {
+  const table: Record<string, string> = {
+    market_days_supply:
+      "Aggressively price or wholesale aged units; tighten acquisition funnel to <45 MDS.",
+    stocking_health:
+      "Rebalance mix toward high-turn segments; refresh merchandising on stale VINs.",
+    auction_winrate:
+      "Recalibrate MMR proxy bids; target +2 lanes/week in shortfall segments.",
+    floor_price_variance:
+      "Tighten appraisal guardrails; enforce Market Report floor discipline.",
+    vdp_views:
+      "Boost Autotrader Top Dealer placements and refresh photography on <100-view VINs.",
+    lead_conversion:
+      "BDC follow-up SLA <8m; tighten appointment-set scripts; A/B test CTAs.",
+    price_to_market:
+      "Re-price to 95-100 P2M band; reduce >10d price-stale inventory.",
+    trade_volume:
+      "Push KBB ICO widget on VDP + service drive; incentive trade walks.",
+    recon_cycle_time:
+      "Reduce dwell in sublet & detail; target Speed-to-Retail <5 days.",
+    bay_utilization:
+      "Rebalance tech schedules; pre-load tomorrow's RO at 4pm close.",
+    fi_penetration:
+      "Menu-sell all eligible products; coach desk on tier-aware presentation.",
+    tier_a_b_mix:
+      "Tighten lead scoring; route tier-A credit to prime lenders first.",
+  };
+  return (
+    table[m.key] ??
+    `Close the ${PILLAR_LABELS[pillar].toLowerCase()} gap on ${m.label}.`
+  );
+}
+
+function computeBottlenecks(
+  brands: BrandSignal[],
+  entropyWeights: Record<Pillar, number>,
+): Bottleneck[] {
+  const raw: Bottleneck[] = [];
+
+  for (const b of brands) {
+    // Pillar weight and how many metrics share it across brands of same pillar
+    const pillarBrandCount = brands.filter((x) => x.pillar === b.pillar).length;
+    const pillarW = entropyWeights[b.pillar];
+
+    for (const m of b.metrics) {
+      const n = normalizeMetric(m);
+      const gap = 1 - n; // how far from healthy (0 = perfect, 1 = worst)
+      // Score drag in absolute 0-100 points attributable to this single metric
+      const drag = gap * m.weight * (pillarW / pillarBrandCount) * 100;
+      raw.push({
+        brand: b.id,
+        brandName: b.name,
+        metricKey: m.key,
+        metricLabel: m.label,
+        pillar: b.pillar,
+        drag,
+        share: 0, // filled in after normalization
+        raw: m.value,
+        target: m.target,
+        unit: m.unit,
+        direction: m.direction,
+        recommendation: recommendationFor(m, b.pillar),
+      });
+    }
+  }
+
+  const total = raw.reduce((s, r) => s + r.drag, 0) || 1;
+  return raw
+    .map((r) => ({ ...r, share: (r.drag / total) * 100 }))
+    .sort((a, b) => b.drag - a.drag);
+}
+
+/* --------------------------------------------------------------------------
+ * Public entry point
+ * ------------------------------------------------------------------------ */
+
+export interface ScoringOptions {
+  /** Previous overall score, for trend delta. Defaults to 0. */
+  previousOverall?: number;
+}
+
+export function scoreDealer(
+  brands: BrandSignal[],
+  opts: ScoringOptions = {},
+): HealthReport {
+  const entropyWeights = computeEntropyWeights(brands);
+  const brandScores = brands.map(computeBrandScore);
+
+  const pillars: Pillar[] = [
+    "inventory",
+    "demand",
+    "valuation",
+    "service",
+    "finance",
+  ];
+
+  const pillarScores: PillarScore[] = pillars.map((p) => ({
+    pillar: p,
+    label: PILLAR_LABELS[p],
+    score: Math.round(pillarAggregate(p, brandScores, brands) * 1000) / 10,
+    weight: entropyWeights[p],
+    brands: brands.filter((b) => b.pillar === p).map((b) => b.id),
+  }));
+
+  // Weighted overall (already in 0-100 scale because pillarScore is 0-100)
+  const overallRaw = pillarScores.reduce(
+    (s, ps) => s + (ps.score / 100) * ps.weight,
+    0,
+  );
+  const overall = Math.round(overallRaw * 1000) / 10; // one decimal
+
+  const bottlenecks = computeBottlenecks(brands, entropyWeights);
+  const prev = opts.previousOverall ?? overall;
+  const trend = Math.round((overall - prev) * 10) / 10;
+
+  return {
+    overall,
+    grade: gradeOf(overall),
+    trend,
+    pillars: pillarScores,
+    brands: brandScores,
+    bottlenecks,
+    entropyWeights,
+  };
+}
