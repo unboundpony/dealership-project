@@ -39,7 +39,7 @@ export function AppHeader({
           </div>
           <div className="hidden sm:block">
             <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-ink-300">
-              Cox Automotive · PRISM
+              Lee Automotive · PRISM
             </div>
             <div className="font-display text-[14px] font-semibold leading-tight tracking-tight text-ink-50">
               Omni-Channel Dealer Health Index

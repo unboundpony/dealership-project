@@ -1,15 +1,15 @@
 import type { BrandSignal, Pillar } from "@/types/health";
 
 /**
- * Mock dealer telemetry for the Big 6 Cox Automotive brands.
+ * Mock dealer telemetry for the Big 6 Lee Automotive brands.
  *
  * Values are anchored to real industry benchmarks:
- *   - vAuto:       Market Days Supply (MDS) ~45d target, stocking level vs demand
- *   - Manheim:     Auction win-rate + floor price variance
- *   - Autotrader:  VDP views per VIN + lead-to-appointment conversion
- *   - KBB:         Price-to-Market (P2M) index + trade-in volume/week
- *   - Xtime:       Recon cycle time (speed-to-retail) + bay utilization
- *   - Dealertrack: F&I penetration + credit tier A/B mix
+ *   - VelocityAuto:       Market Days Supply (MDS) ~45d target, stocking level vs demand
+ *   - MetroLane:     Auction win-rate + floor price variance
+ *   - AutoVista:  VDP views per VIN + lead-to-appointment conversion
+ *   - BLG:         Price-to-Market (P2M) index + trade-in volume/week
+ *   - ServiceFlow:       Recon cycle time (speed-to-retail) + bay utilization
+ *   - DealRoute: F&I penetration + credit tier A/B mix
  */
 
 const pillarLabels: Record<Pillar, string> = {
@@ -24,9 +24,9 @@ export const PILLAR_LABELS = pillarLabels;
 
 export const MOCK_BRANDS: BrandSignal[] = [
   {
-    id: "vauto",
-    name: "vAuto",
-    shortName: "vAuto",
+    id: "velocityauto",
+    name: "VelocityAuto",
+    shortName: "VelocityAuto",
     tagline: "Inventory intelligence",
     pillar: "inventory",
     accent: "#4A6DBD",
@@ -60,9 +60,9 @@ export const MOCK_BRANDS: BrandSignal[] = [
     ],
   },
   {
-    id: "manheim",
-    name: "Manheim",
-    shortName: "Manheim",
+    id: "metrolane",
+    name: "MetroLane",
+    shortName: "MetroLane",
     tagline: "Wholesale & auction",
     pillar: "inventory",
     accent: "#7A94D4",
@@ -91,14 +91,14 @@ export const MOCK_BRANDS: BrandSignal[] = [
         floor: 12,
         weight: 0.5,
         description:
-          "Avg absolute delta of win-price vs Manheim Market Report floor.",
+          "Avg absolute delta of win-price vs MetroLane Market Report floor.",
       },
     ],
   },
   {
-    id: "autotrader",
-    name: "Autotrader",
-    shortName: "Autotrader",
+    id: "autovista",
+    name: "AutoVista",
+    shortName: "AutoVista",
     tagline: "Consumer demand",
     pillar: "demand",
     accent: "#22D3EE",
@@ -132,9 +132,9 @@ export const MOCK_BRANDS: BrandSignal[] = [
     ],
   },
   {
-    id: "kbb",
-    name: "Kelley Blue Book",
-    shortName: "KBB",
+    id: "blueledger",
+    name: "BlueLedger Guide",
+    shortName: "BLG",
     tagline: "Valuation & trade-ins",
     pillar: "valuation",
     accent: "#14B8A6",
@@ -163,14 +163,14 @@ export const MOCK_BRANDS: BrandSignal[] = [
         floor: 10,
         weight: 0.45,
         description:
-          "Confirmed trade appraisals completed via KBB ICO per week.",
+          "Confirmed trade appraisals completed via BLG ICO per week.",
       },
     ],
   },
   {
-    id: "xtime",
-    name: "Xtime",
-    shortName: "Xtime",
+    id: "serviceflow",
+    name: "ServiceFlow",
+    shortName: "ServiceFlow",
     tagline: "Service & recon",
     pillar: "service",
     accent: "#F5B700",
@@ -204,9 +204,9 @@ export const MOCK_BRANDS: BrandSignal[] = [
     ],
   },
   {
-    id: "dealertrack",
-    name: "Dealertrack",
-    shortName: "Dealertrack",
+    id: "dealroute",
+    name: "DealRoute",
+    shortName: "DealRoute",
     tagline: "F&I and financing",
     pillar: "finance",
     accent: "#FB7185",

@@ -79,7 +79,7 @@ export default function App() {
               Executive Health Dashboard
             </h1>
             <p className="mt-1 max-w-2xl text-[13px] text-ink-300">
-              A single, IE-weighted view of every Cox Automotive source system —
+              A single, IE-weighted view of every Lee Automotive source system —
               from lot-level inventory velocity through F&amp;I contract mix —
               updated in real time and ranked by operational drag.
             </p>
@@ -128,7 +128,7 @@ export default function App() {
 
         <footer className="flex flex-wrap items-center justify-between gap-3 pt-2 font-mono text-[10px] uppercase tracking-widest text-ink-400">
           <span>
-            Cox Automotive · Omni-Channel Dealer Health Index · v1.3
+            Lee Automotive · Omni-Channel Dealer Health Index · v1.3
           </span>
           <span>
             Engine: HealthScoreEngine.ts · MCDA + Shannon Entropy · What-If

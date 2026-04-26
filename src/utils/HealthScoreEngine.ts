@@ -17,7 +17,7 @@ import type {
  * ============================================================================
  *
  * The Dealer Health Score is a single 0-100 number that consolidates dealer
- * performance across the Cox Automotive "Big 6" data sources.
+ * performance across the Lee Automotive "Big 6" data sources.
  *
  * Methodology (three-stage MCDA pipeline):
  *
@@ -64,7 +64,7 @@ const PILLAR_LABELS: Record<Pillar, string> = {
  * Analyst-set importance prior for each pillar. The runtime Shannon-entropy
  * weights are blended with this prior (70/30) to stabilize the dashboard.
  *
- * These priors reflect Cox's own "omnichannel retail" point of view:
+ * These priors reflect Lee's own "omnichannel retail" point of view:
  * inventory + demand are the biggest P&L levers, service is the recon
  * bottleneck that caps the other four, and finance closes the deal.
  */
@@ -267,13 +267,13 @@ function recommendationFor(m: MetricSpec, pillar: Pillar): string {
     floor_price_variance:
       "Tighten appraisal guardrails; enforce Market Report floor discipline.",
     vdp_views:
-      "Boost Autotrader Top Dealer placements and refresh photography on <100-view VINs.",
+      "Boost AutoVista Top Dealer placements and refresh photography on <100-view VINs.",
     lead_conversion:
       "BDC follow-up SLA <8m; tighten appointment-set scripts; A/B test CTAs.",
     price_to_market:
       "Re-price to 95-100 P2M band; reduce >10d price-stale inventory.",
     trade_volume:
-      "Push KBB ICO widget on VDP + service drive; incentive trade walks.",
+      "Push BLG ICO widget on VDP + service drive; incentive trade walks.",
     recon_cycle_time:
       "Reduce dwell in sublet & detail; target Speed-to-Retail <5 days.",
     bay_utilization:

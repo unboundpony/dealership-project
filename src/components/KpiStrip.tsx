@@ -36,11 +36,11 @@ interface Kpi {
 }
 
 export function KpiStrip({ brands, report }: KpiStripProps) {
-  const mds = metricBy(brands, "vauto", "market_days_supply") ?? 0;
-  const vdp = metricBy(brands, "autotrader", "vdp_views") ?? 0;
-  const conv = metricBy(brands, "autotrader", "lead_conversion") ?? 0;
-  const recon = metricBy(brands, "xtime", "recon_cycle_time") ?? 0;
-  const fi = metricBy(brands, "dealertrack", "fi_penetration") ?? 0;
+  const mds = metricBy(brands, "velocityauto", "market_days_supply") ?? 0;
+  const vdp = metricBy(brands, "autovista", "vdp_views") ?? 0;
+  const conv = metricBy(brands, "autovista", "lead_conversion") ?? 0;
+  const recon = metricBy(brands, "serviceflow", "recon_cycle_time") ?? 0;
+  const fi = metricBy(brands, "dealroute", "fi_penetration") ?? 0;
 
   const kpis: Kpi[] = [
     {
@@ -59,7 +59,7 @@ export function KpiStrip({ brands, report }: KpiStripProps) {
       delta: mds <= 45 ? "On target" : `${(mds - 45).toFixed(0)}d over`,
       direction: mds <= 45 ? "up" : "down",
       accent: "#4A6DBD",
-      sub: "vAuto · Inventory",
+      sub: "VelocityAuto · Inventory",
     },
     {
       icon: Users2,
@@ -68,7 +68,7 @@ export function KpiStrip({ brands, report }: KpiStripProps) {
       delta: vdp >= 200 ? "Healthy" : `${Math.round(240 - vdp)} below`,
       direction: vdp >= 200 ? "up" : "down",
       accent: "#22D3EE",
-      sub: "Autotrader · Demand",
+      sub: "AutoVista · Demand",
     },
     {
       icon: TrendingUp,
@@ -77,7 +77,7 @@ export function KpiStrip({ brands, report }: KpiStripProps) {
       delta: conv >= 28 ? "Above plan" : "Below plan",
       direction: conv >= 28 ? "up" : "down",
       accent: "#14B8A6",
-      sub: "Autotrader BDC",
+      sub: "AutoVista BDC",
     },
     {
       icon: Timer,
@@ -86,7 +86,7 @@ export function KpiStrip({ brands, report }: KpiStripProps) {
       delta: recon <= 5 ? "Speed-to-Retail" : `${(recon - 5).toFixed(1)}d over`,
       direction: recon <= 5 ? "up" : "down",
       accent: "#F5B700",
-      sub: "Xtime · Service",
+      sub: "ServiceFlow · Service",
     },
     {
       icon: CircleDollarSign,
@@ -95,7 +95,7 @@ export function KpiStrip({ brands, report }: KpiStripProps) {
       delta: fi >= 75 ? "Above plan" : `${Math.round(78 - fi)}pp gap`,
       direction: fi >= 75 ? "up" : "down",
       accent: "#FB7185",
-      sub: "Dealertrack · Finance",
+      sub: "DealRoute · Finance",
     },
   ];
 

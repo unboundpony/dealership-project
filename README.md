@@ -1,11 +1,11 @@
-# Cox Automotive — Omni-Channel Dealer Health Index
+# Lee Automotive — Omni-Channel Dealer Health Index
 
 > A single, IE-weighted executive dashboard that centralizes telemetry from the
-> **Big 6** Cox Automotive brands into one composite **Dealer Health Score
+> **Big 6** Lee Automotive brands into one composite **Dealer Health Score
 > (0–100)**.
 
 The application is designed as an internship-portfolio-grade proof of concept
-for the Cox Automotive PRISM platform: a high-density, cross-brand operations
+for the Lee Automotive PRISM platform: a high-density, cross-brand operations
 cockpit that turns fragmented source-system signals into a single,
 boardroom-ready number — and then shows *exactly* which operational stage is
 dragging that number down.
@@ -17,7 +17,7 @@ dragging that number down.
 Most dashboards show data; this project was evolved to *prescribe action*. 
 
 ### Sprint 1: The MVP (Initial Launch)
-* **Goal:** Centralize cross-brand Cox Automotive metrics (vAuto, Xtime, Manheim) into a single unified index.
+* **Goal:** Centralize cross-brand Lee Automotive metrics (VelocityAuto, ServiceFlow, MetroLane) into a single unified index.
 * **Result:** A functioning React dashboard with real-time MCDA-weighted health scores.
 * <img width="1901" height="942" alt="Screenshot 2026-04-25 131748" src="https://github.com/user-attachments/assets/2834a4d7-b2fc-48a7-929d-5817016f8d05" />
 
@@ -41,11 +41,11 @@ Most dashboards show data; this project was evolved to *prescribe action*.
 
 | Pillar        | Source System           | Key Signals                                      |
 | ------------- | ----------------------- | ------------------------------------------------ |
-| **Inventory** | **vAuto** · **Manheim** | Market Days Supply, Stocking Health, Auction Win-Rate, Floor Variance |
-| **Demand**    | **Autotrader**          | VDP Views / VIN, Lead-to-Appointment Conversion |
-| **Valuation** | **Kelley Blue Book**    | Price-to-Market Index, Trade-In Volume          |
-| **Service**   | **Xtime**               | Recon Cycle Time (Speed-to-Retail), Bay Utilization |
-| **Finance**   | **Dealertrack**         | F&I Penetration, Tier A+B Credit Mix            |
+| **Inventory** | **VelocityAuto** · **MetroLane** | Market Days Supply, Stocking Health, Auction Win-Rate, Floor Variance |
+| **Demand**    | **AutoVista**          | VDP Views / VIN, Lead-to-Appointment Conversion |
+| **Valuation** | **BlueLedger Guide**    | Price-to-Market Index, Trade-In Volume          |
+| **Service**   | **ServiceFlow**               | Recon Cycle Time (Speed-to-Retail), Bay Utilization |
+| **Finance**   | **DealRoute**         | F&I Penetration, Tier A+B Credit Mix            |
 
 Each brand card in the **Brand Signal Grid** renders its own pillar score, live
 sync status, and per-metric normalized bars. The dashboard "feels live" via a
@@ -97,7 +97,7 @@ becomes more informative.
 
 Intra-pillar metric weights (`MetricSpec.weight`) are analyst-set importance
 priors baked into the service layer — e.g. *Recon Cycle Time* is 60 % of the
-Service pillar because speed-to-retail is the single biggest lever Xtime
+Service pillar because speed-to-retail is the single biggest lever ServiceFlow
 controls.
 
 ### Stage 3 — Aggregation + Drag Attribution
@@ -120,7 +120,7 @@ Bottlenecks (IE Insight)** panel.
 
 ---
 
-## 3 · UI/UX — Cox PRISM "Executive Navy"
+## 3 · UI/UX — Lee PRISM "Executive Navy"
 
 The theme is a dense, executive-navy palette tuned for board-room legibility
 on dark displays:
@@ -165,7 +165,7 @@ src/
 ├── types/
 │   └── health.ts            BrandSignal, MetricSpec, HealthReport, Bottleneck
 ├── styles/
-│   └── index.css            Tailwind layers + Cox PRISM design tokens
+│   └── index.css            Tailwind layers + Lee PRISM design tokens
 ├── App.tsx                  Dashboard composition root
 └── main.tsx                 React entry point
 ```
@@ -196,10 +196,10 @@ npm run typecheck    # tsc -b --noEmit
 | Decision | Why |
 | -------- | --- |
 | **IE weighting (entropy + prior blend)** | Pure entropy weights are jumpy on small signal sets; pure priors ignore live market reality. The 70/30 blend is the standard CRITIC-family compromise. |
-| **Mocked `jitterBrands` feed** | Keeps the demo fully self-contained and reproducible while simulating the *behavior* of a live Cox data-mesh subscription. Swap the mock service for a real fetch client without touching the engine. |
+| **Mocked `jitterBrands` feed** | Keeps the demo fully self-contained and reproducible while simulating the *behavior* of a live Lee data-mesh subscription. Swap the mock service for a real fetch client without touching the engine. |
 | **Per-metric `target` / `floor`** | Normalizing to dealer-specific targets (not global min-max) prevents lane-leader dealers from being penalized by raw-unit outliers elsewhere in the dataset. |
 | **Separate drag attribution** | Decoupling "what's the score" from "what's dragging it down" lets the same engine output power both the Hero gauge *and* the Bottlenecks panel without redundant computation. |
-| **Type-first domain model** | `src/types/health.ts` is the source of truth; services and components conform to it. This mirrors how Cox's PRISM contracts would be consumed in production. |
+| **Type-first domain model** | `src/types/health.ts` is the source of truth; services and components conform to it. This mirrors how Lee's PRISM contracts would be consumed in production. |
 
 ---
 
@@ -208,7 +208,7 @@ npm run typecheck    # tsc -b --noEmit
 * Replace `src/services/mockDealerData.ts` with a real PRISM / GraphQL client.
 * Persist `previousOverall` and snapshots to power a true 30/60/90-day trend.
 * Add per-rooftop drill-down routes (`/rooftop/:id`).
-* Wire `recommendationFor` to Cox's play-book CMS for in-context actions.
+* Wire `recommendationFor` to Lee's play-book CMS for in-context actions.
 * Add a what-if simulator: let the user drag a pillar slider and watch the
   overall score, weights, and bottlenecks recompute live.
 

@@ -37,7 +37,7 @@ interface UseDealerHealthReturn {
 
 /**
  * Primary data hook for the dashboard. Simulates a live feed of the Big 6
- * Cox brands, runs it through the HealthScoreEngine every poll tick, and
+ * Lee brands, runs it through the HealthScoreEngine every poll tick, and
  * exposes the derived report + trend to consumers.
  *
  * Also exposes the floorplan fleet and baseline APR that power the

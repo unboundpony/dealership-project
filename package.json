@@ -1,9 +1,9 @@
 {
-  "name": "cox-omni-dealer-health-index",
+  "name": "lee-omni-dealer-health-index",
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "description": "Cox Automotive Omni-Channel Dealer Health Index - an IE-weighted MCDA dashboard unifying the Big 6 Cox brands into a single Dealer Health Score.",
+  "description": "Lee Automotive Omni-Channel Dealer Health Index - an IE-weighted MCDA dashboard unifying the Big 6 Lee brands into a single Dealer Health Score.",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",

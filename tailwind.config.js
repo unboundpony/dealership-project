@@ -4,7 +4,7 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Cox PRISM - "Executive Navy" palette
+        // Lee PRISM - "Executive Navy" palette
         navy: {
           950: "#060B1A",
           900: "#0A1128",

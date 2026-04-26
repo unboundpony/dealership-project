@@ -1,10 +1,10 @@
 export type BrandId =
-  | "vauto"
-  | "manheim"
-  | "autotrader"
-  | "kbb"
-  | "xtime"
-  | "dealertrack";
+  | "velocityauto"
+  | "metrolane"
+  | "autovista"
+  | "blueledger"
+  | "serviceflow"
+  | "dealroute";
 
 export type Pillar =
   | "inventory"

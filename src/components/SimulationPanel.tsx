@@ -61,11 +61,11 @@ const PILLAR_PALETTE: Record<Pillar, string> = {
 };
 
 const PILLAR_TAGLINE: Record<Pillar, string> = {
-  inventory: "vAuto · Manheim",
-  demand: "Autotrader",
-  valuation: "Kelley Blue Book",
-  service: "Xtime",
-  finance: "Dealertrack",
+  inventory: "VelocityAuto · MetroLane",
+  demand: "AutoVista",
+  valuation: "BlueLedger Guide",
+  service: "ServiceFlow",
+  finance: "DealRoute",
 };
 
 /* APR rate-hike quick presets (decimal form). */

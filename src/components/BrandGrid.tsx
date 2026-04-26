@@ -21,12 +21,12 @@ interface BrandGridProps {
 }
 
 const brandIcons: Record<string, LucideIcon> = {
-  vauto: Car,
-  manheim: Gavel,
-  autotrader: Megaphone,
-  kbb: BarChart3,
-  xtime: Wrench,
-  dealertrack: Banknote,
+  velocityauto: Car,
+  metrolane: Gavel,
+  autovista: Megaphone,
+  blueledger: BarChart3,
+  serviceflow: Wrench,
+  dealroute: Banknote,
 };
 
 function metricDisplay(
